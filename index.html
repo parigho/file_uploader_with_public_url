@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Drive File Uploader</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-image: url('https://source.unsplash.com/random/1600x900');
+      background-size: cover;
+    
+      background-repeat: no-repeat;
+      margin: 0;
+      padding: 0;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 330px auto;
+      position: relative;
+      background-color: rgba(0, 0, 0, 0.8);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .drop-zone {
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .drop-zone:hover {
+      border-color: #007bff;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    #uploadButton {
+      margin-top: 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #uploadButton:hover {
+      background-color: #0056b3;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: #24b746; /* Green */
+      color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      z-index: 1000;
+    }
+
+    .popup-content {
+      text-align: center;
+    }
+
+    .close-button {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      cursor: pointer;
+    }
+
+    .popup-close {
+      color: #fff;
+      font-size: 20px;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .popup-close:hover {
+      color: #cccccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Google Drive File Uploader</h1>
+    <div class="drop-zone" id="dropZone">
+      <p>Drag & Drop files here or click to browse</p>
+      <input type="file" id="fileInput" name="file">
+    </div>
+    <button id="uploadButton">Upload File</button>
+  </div>
+
+  <div class="popup" id="popup">
+    <div class="popup-content">
+      <span class="close-button" id="closeButton">&times;</span>
+      <p id="popupMessage"></p>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadButton = document.getElementById('uploadButton');
+    const popup = document.getElementById('popup');
+    const popupMessage = document.getElementById('popupMessage');
+    const closeButton = document.getElementById('closeButton');
+
+    dropZone.addEventListener('dragover', (event) => {
+      event.preventDefault();
+      dropZone.classList.add('drop-zone-hover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drop-zone-hover');
+    });
+
+    dropZone.addEventListener('drop', (event) => {
+      event.preventDefault();
+      dropZone.classList.remove('drop-zone-hover');
+      const file = event.dataTransfer.files[0];
+      handleFile(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      handleFile(file);
+    });
+
+    uploadButton.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    closeButton.addEventListener('click', () => {
+      popup.style.display = 'none';
+    });
+
+    async function handleFile(file) {
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        if (response.ok) {
+          popupMessage.innerHTML = `File uploaded successfully! Public URL: <a href="${data.webViewLink}" target="_blank">${data.webViewLink}</a>`;
+          popup.style.display = 'block';
+        } else {
+          alert(`Error: ${data.error}`);
+        }
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        alert('Error uploading file. Please try again later.');
+      }
+    }
+  </script>
+</body>
+</html>
